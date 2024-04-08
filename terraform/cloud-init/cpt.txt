@@ -1,0 +1,48 @@
+#cloud-config
+groups:
+  - docker: [netadmin]
+package_update: true
+package_upgrade: true
+packages:
+  - docker
+  - docker-compose
+  - wireguard
+  - masscan
+  - whois
+  - nmap
+  - 
+write_files:
+  - path: /home/netadmin/config.sh
+    permissions: "0775"
+    content: |
+      #!/bin/bash
+      sed -i s/YOURDOMAIN.COM/"$1"/g /containers/caddy/Caddyfile
+      sed -i s/YOURDOMAIN.COM/"$1"/g /containers/headscale/config/config.yaml
+      cd /containers/caddy
+      sudo docker-compose up -d
+      cd /containers/headscale
+      sudo docker-compose up -d
+    owner: netadmin:netadmin
+runcmd:
+  - sudo docker network create reverseproxy-nw
+  - sudo mkdir -p /source
+  - cd /source
+  - sudo git clone https://github.com/cy63rSANS/YourVPN
+  - sudo cp -r YourVPN/fileStructure/containers /containers
+  - sudo chown -r vpnmgr:docker /containers
+  - sudo echo 'net.ipv4.ip_forward = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf
+  - sudo echo 'net.ipv6.conf.all.forwarding = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf
+  - sudo sysctl -p /etc/sysctl.d/99-tailscale.conf
+  - sudo curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/jammy.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-arch>  
+  - sudo curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/jammy.tailscale-keyring.list | sudo tee /etc/apt/sources.list.d> 
+  - sudo apt update
+  - sudo apt install tailscale -y
+
+naabu
+puredns
+edge
+massdns
+dnsx
+subfinder
+ scanner
+  nuclei
